@@ -6,6 +6,8 @@ Game Of Life
 import pygame
 import sys
 from random import randrange
+from copy import deepcopy
+from time import sleep
 
 pygame.init()
 
@@ -18,7 +20,6 @@ gray = (100, 100, 100)
 
 
 class Board:
-
     def __init__(self, x: int, y: int):
         """
         zero : empty
@@ -31,8 +32,33 @@ class Board:
         self.board = [[0 for col in range(self.grid_width)] for row in range(self.grid_height)]
         self.position = self.x, self.y = x, y
 
+    def get_adjacent(self, row, col):
+        adjacent = []
+        for i in (-1, 0, 1):
+            for j in (-1, 0, 1):
+                tmp_row = row + i
+                tmp_col = col + j
+                if tmp_row >= 0 and tmp_col >= 0 and tmp_row < self.grid_height \
+                        and tmp_col < self.grid_width  and not(i == j == 0):
+                    adjacent.append(self.board[tmp_row][tmp_col])
+        return tuple(adjacent)
+
+    def tick(self):
+        tmp_board = deepcopy(self.board)
+        for row in range(self.grid_height):
+            for col in range(self.grid_width):
+                adjacent = self.get_adjacent(row, col)
+                alive_adj = adjacent.count(1)
+                if alive_adj < 2 and self.board[row][col] == 1:
+                    tmp_board[row][col] = 0  # dies
+                elif alive_adj > 3 and self.board[row][col] == 1:
+                    tmp_board[row][col] = 0  # dies
+                elif alive_adj == 3 and self.board[row][col] == 0:
+                    tmp_board[row][col] = 1  # reproduce
+        self.board = tmp_board
+
     def set_randomly(self, r: int):
-        if r > self.grid_height*self.grid_width:
+        if r > self.grid_height * self.grid_width:
             raise Exception("Error you want to set more than what you can")
         # clear board
         self.board = [[0 for col in range(self.grid_width)] for row in range(self.grid_height)]
@@ -69,7 +95,15 @@ def main():
     screen = pygame.display.set_mode(size)  # type: pygame.display
     flag_run = True
     board = Board(5, 5)
-    board.set_randomly(1000)  # fill 1000 cell randomly
+    board.set_randomly(4500)  # fill cell randomly
+    # board.board[50][50] = 1
+    # board.board[50][51] = 1
+    # board.board[50][52] = 1
+    # board.board[50][53] = 1
+    # board.board[50][54] = 1
+    # board.board[50][55] = 1
+    # board.board[50][56] = 1
+    #
 
     while flag_run:
         for event in pygame.event.get():
@@ -81,6 +115,10 @@ def main():
         board.draw(screen)
         pygame.display.update()
         clock.tick(30)  # it should keep it 30 fps
+
+        board.tick()
+
+        # sleep(1)
 
     pygame.quit()
     sys.exit()
