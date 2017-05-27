@@ -5,6 +5,8 @@ Game Of Life
 
 import pygame
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from random import randrange
 from copy import deepcopy
 from time import sleep
@@ -17,6 +19,7 @@ pic_1 = pygame.image.load("resource/image/1.png")
 black = (0, 0, 0)
 white = (255, 255, 255)
 gray = (100, 100, 100)
+flag_run = True
 
 
 class Board:
@@ -39,7 +42,7 @@ class Board:
                 tmp_row = row + i
                 tmp_col = col + j
                 if tmp_row >= 0 and tmp_col >= 0 and tmp_row < self.grid_height \
-                        and tmp_col < self.grid_width  and not(i == j == 0):
+                        and tmp_col < self.grid_width and not (i == j == 0):
                     adjacent.append(self.board[tmp_row][tmp_col])
         return tuple(adjacent)
 
@@ -85,7 +88,7 @@ class Board:
                 screen.blit(pic, (cell_x, cell_y))
 
 
-def main():
+def main(r):
     """
     main function
     :return: None
@@ -93,9 +96,8 @@ def main():
     size = width, height = 610, 610  # screen size
     clock = pygame.time.Clock()  # type: pygame.time.Clock
     screen = pygame.display.set_mode(size)  # type: pygame.display
-    flag_run = True
     board = Board(5, 5)
-    board.set_randomly(4500)  # fill cell randomly
+    board.set_randomly(r)  # fill cell randomly
     # board.board[50][50] = 1
     # board.board[50][51] = 1
     # board.board[50][52] = 1
@@ -104,7 +106,7 @@ def main():
     # board.board[50][55] = 1
     # board.board[50][56] = 1
     #
-
+    global flag_run
     while flag_run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -125,4 +127,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # thread_pool = ThreadPoolExecutor(max_workers=1)
+    r = int(input("please enter initial value for the game: "))
+    # thread_pool.map()
+    game_thread = threading.Thread(target=main, args=(r,))
+    game_thread.start()
+    while True:
+        command = input("quit/new? (q/n): ")  # type: str
+        if command[0].lower() == 'q':
+            flag_run = False
+            sys.exit(0)
+        elif command[0].lower() == 'n':
+            r = int(input("please enter initial value for the game: "))
+            flag_run = False
+            sleep(1)
+            flag_run = True
+            game_thread = threading.Thread(target=main, args=(r,))
+            game_thread.start()
