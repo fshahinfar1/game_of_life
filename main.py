@@ -6,7 +6,6 @@ Game Of Life
 import pygame
 import sys
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from random import randrange
 from copy import deepcopy
 from time import sleep
@@ -20,6 +19,11 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 gray = (100, 100, 100)
 flag_run = True
+
+
+class GameException(Exception):
+    def __init__(self, message=""):
+        super(GameException, self).__init__(message)
 
 
 class Board:
@@ -62,7 +66,7 @@ class Board:
 
     def set_randomly(self, r: int):
         if r > self.grid_height * self.grid_width:
-            raise Exception("Error you want to set more than what you can")
+            raise GameException("Error you want to set more than what you can")
         # clear board
         self.board = [[0 for col in range(self.grid_width)] for row in range(self.grid_height)]
         for i in range(r):
@@ -97,7 +101,12 @@ def main(r):
     clock = pygame.time.Clock()  # type: pygame.time.Clock
     screen = pygame.display.set_mode(size)  # type: pygame.display
     board = Board(5, 5)
-    board.set_randomly(r)  # fill cell randomly
+    try:
+        board.set_randomly(r)  # fill cell randomly
+    except GameException as e:
+        print("\n warning - invalid initial value\n")
+        pygame.quit()
+        return
     # board.board[50][50] = 1
     # board.board[50][51] = 1
     # board.board[50][52] = 1
@@ -120,27 +129,27 @@ def main(r):
 
         board.tick()
 
-        # sleep(1)
+        sleep(0.2)
 
     pygame.quit()
     sys.exit()
 
 
 if __name__ == "__main__":
-    # thread_pool = ThreadPoolExecutor(max_workers=1)
     r = int(input("please enter initial value for the game: "))
-    # thread_pool.map()
     game_thread = threading.Thread(target=main, args=(r,))
     game_thread.start()
+    sleep(0.5)
     while True:
         command = input("quit/new? (q/n): ")  # type: str
         if command[0].lower() == 'q':
             flag_run = False
             sys.exit(0)
         elif command[0].lower() == 'n':
-            r = int(input("please enter initial value for the game: "))
             flag_run = False
             sleep(1)
+            r = int(input("please enter initial value for the game: "))
             flag_run = True
             game_thread = threading.Thread(target=main, args=(r,))
             game_thread.start()
+            sleep(0.5)
